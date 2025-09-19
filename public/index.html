@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hypoxemia-&-Stress-Monitor-Dashboard</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #latest {
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+      #predictions {
+        font-size: 1.2em;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+        max-width: 400px;
+      }
+      canvas {
+        max-width: 1000px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hypoxemia-&-Stress-Monitor-Dashboard</h1>
+    <div id="latest">Loading latest sensor readings...</div>
+    <canvas id="healthChart"></canvas>
+
+    <div id="predictions">Loading latest predictions...</div>
+
+    <script>
+      // ---------------- Firebase Config ----------------
+      const firebaseConfig = {
+        apiKey: "AIzaSyAJ2tFrdAT2fFhShvVoPixYK2PaCtN0M2c",
+        authDomain: "hypoxemia-and-stress-monitor.firebaseapp.com",
+        databaseURL:
+          "https://hypoxemia-and-stress-monitor-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hypoxemia-and-stress-monitor",
+        storageBucket: "hypoxemia-and-stress-monitor.firebasestorage.app",
+        messagingSenderId: "490451597399",
+        appId: "1:490451597399:web:d36e7c23b5c9a05e9fcb12",
+        measurementId: "G-X180PM2HSN",
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+
+      // ---------------- Chart.js Setup ----------------
+      const ctx = document.getElementById("healthChart").getContext("2d");
+      const chartData = {
+        labels: [],
+        datasets: [
+          {
+            label: "Heart Rate (bpm)",
+            data: [],
+            borderColor: "red",
+            fill: false,
+          },
+          {
+            label: "SpO2 (%)",
+            data: [],
+            borderColor: "blue",
+            fill: false,
+          },
+        ],
+      };
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: chartData,
+        options: { responsive: true, animation: false },
+      });
+
+      // ---------------- Dashboard Update Function ----------------
+      function updateDashboard(label, bpm, spo2) {
+        document.getElementById("latest").innerHTML = `
+          <b>Latest Sensor Reading</b><br>
+          Time: ${label} <br>
+          Heart Rate: ${bpm ?? 0} bpm <br>
+          SpO2: ${spo2 > 0 ? spo2 : 0} %
+        `;
+
+        chartData.labels.push(label);
+        chartData.datasets[0].data.push(bpm ?? 0);
+        chartData.datasets[1].data.push(spo2 > 0 ? spo2 : 0);
+
+        if (chartData.labels.length > 50) {
+          chartData.labels.shift();
+          chartData.datasets[0].data.shift();
+          chartData.datasets[1].data.shift();
+        }
+        chart.update();
+      }
+
+      // ---------------- Firebase References ----------------
+      const sensorDataRef = db.ref("SensorData"); // Match your Python path, exact case
+      const predictionsRef = db.ref("predictions");
+
+      // Load sensor data
+      sensorDataRef.on("child_added", (snapshot) => {
+        const data = snapshot.val();
+        const label =
+          `${data.date ?? ""} ${data.time ?? ""}`.trim() ||
+          new Date().toLocaleTimeString();
+        updateDashboard(label, data.dev60_HR, data.saturation);
+      });
+
+      // Load latest predictions
+      predictionsRef.limitToLast(1).on("child_added", (snapshot) => {
+        const pred = snapshot.val();
+        if (!pred) return;
+        document.getElementById("predictions").innerHTML = `
+          <b>Latest Predictions</b><br>
+          Stress: ${pred.stress_class} <br>
+          Hypoxemia: ${pred.hypoxemia_class} <br>
+          Time: ${pred.timestamp}
+        `;
+      });
+    </script>
+  </body>
+</html>
