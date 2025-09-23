@@ -2,125 +2,586 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Hypoxemia-&-Stress-Monitor-Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="images/blue-heart-logo.png" />
+    <title>HealthMonitor Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
-      }
-      #latest {
-        font-size: 1.2em;
-        margin-bottom: 20px;
-      }
-      #predictions {
-        font-size: 1.2em;
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        background: #f9f9f9;
-        max-width: 400px;
-      }
-      canvas {
-        max-width: 1000px;
-      }
-    </style>
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
-    <h1>Hypoxemia-&-Stress-Monitor-Dashboard</h1>
-    <div id="latest">Loading latest sensor readings...</div>
-    <canvas id="healthChart"></canvas>
+  <body class="dark">
+    <!-- Landing Page -->
+    <div id="landingPage" class="landing-page">
+      <div class="landing-background">
+        <div class="floating-shapes">
+          <div class="shape shape-1"></div>
+          <div class="shape shape-2"></div>
+          <div class="shape shape-3"></div>
+          <div class="shape shape-4"></div>
+          <div class="shape shape-5"></div>
+        </div>
+      </div>
 
-    <div id="predictions">Loading latest predictions...</div>
+      <div class="landing-content">
+        <div class="logo">
+          <i class="fas fa-heartbeat"></i>
+          <h1>HealthMonitor Pro</h1>
+        </div>
 
-    <script>
-      // ---------------- Firebase Config ----------------
-      const firebaseConfig = {
-        apiKey: "AIzaSyAJ2tFrdAT2fFhShvVoPixYK2PaCtN0M2c",
-        authDomain: "hypoxemia-and-stress-monitor.firebaseapp.com",
-        databaseURL:
-          "https://hypoxemia-and-stress-monitor-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "hypoxemia-and-stress-monitor",
-        storageBucket: "hypoxemia-and-stress-monitor.firebasestorage.app",
-        messagingSenderId: "490451597399",
-        appId: "1:490451597399:web:d36e7c23b5c9a05e9fcb12",
-        measurementId: "G-X180PM2HSN",
-      };
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.database();
+        <div class="welcome-text">
+          <h2>Real-time Health Analytics</h2>
+          <p>
+            Monitor heart rate, Blood oxygen levels, Hypoxemia and Stress
+            indicators with our advanced dashboard system
+          </p>
+        </div>
 
-      // ---------------- Chart.js Setup ----------------
-      const ctx = document.getElementById("healthChart").getContext("2d");
-      const chartData = {
-        labels: [],
-        datasets: [
-          {
-            label: "Heart Rate (bpm)",
-            data: [],
-            borderColor: "red",
-            fill: false,
-          },
-          {
-            label: "SpO2 (%)",
-            data: [],
-            borderColor: "blue",
-            fill: false,
-          },
-        ],
-      };
-      const chart = new Chart(ctx, {
-        type: "line",
-        data: chartData,
-        options: { responsive: true, animation: false },
-      });
+        <div class="features-grid">
+          <div class="feature-card" data-report="bpm">
+            <i class="fas fa-heart"></i>
+            <h3>Heart Rate Report</h3>
+            <p>View detailed BPM analysis and trends</p>
+          </div>
 
-      // ---------------- Dashboard Update Function ----------------
-      function updateDashboard(label, bpm, spo2) {
-        document.getElementById("latest").innerHTML = `
-          <b>Latest Sensor Reading</b><br>
-          Time: ${label} <br>
-          Heart Rate: ${bpm ?? 0} bpm <br>
-          SpO2: ${spo2 > 0 ? spo2 : 0} %
-        `;
+          <div class="feature-card" data-report="spo2">
+            <i class="fas fa-lungs"></i>
+            <h3>SpO2 Report</h3>
+            <p>Blood oxygen level analysis and insights</p>
+          </div>
 
-        chartData.labels.push(label);
-        chartData.datasets[0].data.push(bpm ?? 0);
-        chartData.datasets[1].data.push(spo2 > 0 ? spo2 : 0);
+          <div class="feature-card" data-report="hypoxemia">
+            <i class="fas fa-lungs"></i>
+            <h3>Hypoxemia Analysis</h3>
+            <p>Predicting based on blood oxygen level</p>
+          </div>
 
-        if (chartData.labels.length > 50) {
-          chartData.labels.shift();
-          chartData.datasets[0].data.shift();
-          chartData.datasets[1].data.shift();
-        }
-        chart.update();
-      }
+          <div class="feature-card" data-report="stress">
+            <i class="fas fa-brain"></i>
+            <h3>Stress Analysis</h3>
+            <p>Stress level monitoring and insights</p>
+          </div>
+        </div>
 
-      // ---------------- Firebase References ----------------
-      const sensorDataRef = db.ref("SensorData"); // Match your Python path, exact case
-      const predictionsRef = db.ref("predictions");
+        <button id="enterDashboard" class="enter-btn">
+          <span>View Full Dashboard</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
 
-      // Load sensor data
-      sensorDataRef.on("child_added", (snapshot) => {
-        const data = snapshot.val();
-        const label =
-          `${data.date ?? ""} ${data.time ?? ""}`.trim() ||
-          new Date().toLocaleTimeString();
-        updateDashboard(label, data.dev60_HR, data.saturation);
-      });
+        <!-- Contact Section -->
+        <div class="contact-section-wrapper">
+          <!-- Contact Info -->
+          <div class="contact-section">
+            <h3>Contact Developer</h3>
+            <div class="contact-links">
+              <a
+                href="https://www.linkedin.com/in/kambam-taibangnganba-484a521a8/"
+                class="contact-link"
+                target="_blank"
+              >
+                <i class="fab fa-linkedin"></i>
+                <span>LinkedIn</span>
+              </a>
+              <a
+                href="https://github.com/Taibangnganba"
+                class="contact-link"
+                target="_blank"
+              >
+                <i class="fab fa-github"></i>
+                <span>GitHub</span>
+              </a>
+              <a href="tel:+919402782949" class="contact-link">
+                <i class="fas fa-phone"></i>
+                <span>+91-9402782949</span>
+              </a>
+              <a
+                href="mailto:kambamtaibangnganba@gmail.com"
+                class="contact-link"
+              >
+                <i class="fas fa-envelope"></i>
+                <span>kambamtaibangnganba@gmail.com</span>
+              </a>
+            </div>
+          </div>
 
-      // Load latest predictions
-      predictionsRef.limitToLast(1).on("child_added", (snapshot) => {
-        const pred = snapshot.val();
-        if (!pred) return;
-        document.getElementById("predictions").innerHTML = `
-          <b>Latest Predictions</b><br>
-          Stress: ${pred.stress_class} <br>
-          Hypoxemia: ${pred.hypoxemia_class} <br>
-          Time: ${pred.timestamp}
-        `;
-      });
-    </script>
+          <!-- Developer Photo -->
+          <div class="contact-photo">
+            <img src="images/KT_SUIT.jpg" alt="Developer Photo" />
+          </div>
+          <div class="contact-message">
+            <h4>About this project</h4>
+            <p>
+              Hi, I am Kambam Taibangnganba a B.Tech graduate from NIT Manipur.
+              This is my first end-to-end real-world data project — I built the
+              frontend dashboard, implemented the Firebase backend for realtime
+              ingestion, and developed ML models to predict stress and hypoxemia
+              from physiological signals. I’m eager to collaborate and continue
+              learning during my master’s studies to become a researcher in data
+              science and healthcare.
+            </p>
+            <p class="cta">
+              Open to collaboration & mentorship — let’s connect!
+            </p>
+            <a
+              href="https://github.com/Taibangnganba/Hypoxemia-and-stress-monitor"
+              class="contact-links"
+            >
+              <p class="cta">Feel free to reach out my github-repo.</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="mainDashboard" class="dashboard-container" style="display: none">
+      <div class="dashboard-header">
+        <div class="header-left">
+          <i class="fas fa-heartbeat"></i>
+          <h1>HealthMonitor Pro</h1>
+        </div>
+
+        <div class="header-right">
+          <button id="backToLanding" class="back-btn">
+            <i class="fas fa-home"></i>
+            <span>Back to Home</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="stats-overview">
+        <div class="stat-card clickable-stat" data-report="bpm">
+          <div class="stat-icon"><i class="fas fa-heart"></i></div>
+          <div class="stat-info">
+            <h3>Heart Rate</h3>
+            <span id="currentBPM" class="stat-value">--</span>
+            <span class="stat-unit">bpm</span>
+          </div>
+        </div>
+
+        <div class="stat-card clickable-stat" data-report="spo2">
+          <div class="stat-icon"><i class="fas fa-lungs"></i></div>
+          <div class="stat-info">
+            <h3>SpO2 Level</h3>
+            <span id="currentSpO2" class="stat-value">--</span>
+            <span class="stat-unit">%</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-brain"></i></div>
+          <div class="stat-info">
+            <h3>Stress Level</h3>
+            <span id="currentStress" class="stat-value">--</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-procedures"></i></div>
+          <div class="stat-info">
+            <h3>Hypoxemia</h3>
+            <span id="currentHypoxemia" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Left Column -->
+        <div class="content-left">
+          <div class="chart-section">
+            <div class="section-header">
+              <h3><i class="fas fa-chart-line"></i> Live Trends</h3>
+              <button id="toggleViewBtn" class="view-toggle">
+                <i class="fas fa-chart-bar"></i>
+                <span>Show Chart</span>
+              </button>
+            </div>
+
+            <div class="visualization-container">
+              <!-- Gauges -->
+              <div id="gaugeRow" class="gauges-container">
+                <div class="gauge-wrapper">
+                  <div class="gauge-label">Heart Rate</div>
+                  <div id="bpmGauge" class="gauge"></div>
+                </div>
+                <div class="gauge-wrapper">
+                  <div class="gauge-label">SpO2 Level</div>
+                  <div id="spo2Gauge" class="gauge"></div>
+                </div>
+              </div>
+
+              <!-- Chart -->
+              <div
+                id="chartContainer"
+                class="chart-container"
+                style="display: none"
+              >
+                <canvas id="healthChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="content-right">
+          <div class="alerts-section">
+            <div class="section-header">
+              <h3><i class="fas fa-bell"></i> Alerts & Predictions</h3>
+            </div>
+            <div id="predictions" class="prediction-box neutral">
+              <div class="alert-header">
+                <i class="fas fa-info-circle"></i>
+                <h4>System Status</h4>
+              </div>
+              <div class="alert-content">
+                <p>Waiting for data...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-section">
+            <div class="section-header">
+              <h3><i class="fas fa-database"></i> Latest Reading</h3>
+            </div>
+            <div id="latest" class="data-box">
+              <div class="data-item">
+                <label>Time:</label><span>--:--:--</span>
+              </div>
+              <div class="data-item">
+                <label>Heart Rate:</label><span>-- bpm</span>
+              </div>
+              <div class="data-item"><label>SpO2:</label><span>-- %</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BPM Report Dashboard -->
+    <div id="bpmReport" class="dashboard-container" style="display: none">
+      <div class="dashboard-header">
+        <div class="header-left">
+          <i class="fas fa-heart"></i>
+          <h1>Heart Rate Analysis</h1>
+        </div>
+
+        <div class="header-right">
+          <button id="bpmToDashboard" class="back-btn">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Full Dashboard</span>
+          </button>
+          <button id="bpmToLanding" class="back-btn">
+            <i class="fas fa-home"></i>
+            <span>Back to Home</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- BPM Stats Overview -->
+      <div class="stats-overview">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-heart"></i></div>
+          <div class="stat-info">
+            <h3>Current Heart Rate</h3>
+            <span id="bpmCurrent" class="stat-value">--</span>
+            <span class="stat-unit">bpm</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+          <div class="stat-info">
+            <h3>Average BPM</h3>
+            <span id="bpmAverage" class="stat-value">--</span>
+            <span class="stat-unit">bpm</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+          <div class="stat-info">
+            <h3>Max BPM</h3>
+            <span id="bpmMax" class="stat-value">--</span>
+            <span class="stat-unit">bpm</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+          <div class="stat-info">
+            <h3>Min BPM</h3>
+            <span id="bpmMin" class="stat-value">--</span>
+            <span class="stat-unit">bpm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BPM Analysis Sections -->
+      <div class="main-content">
+        <div class="content-full">
+          <!-- BPM Chart Section -->
+          <div class="chart-section">
+            <div class="section-header">
+              <h3><i class="fas fa-heartbeat"></i> Heart Rate Trends</h3>
+            </div>
+            <div class="chart-container" style="height: 400px">
+              <canvas id="bpmChart"></canvas>
+            </div>
+          </div>
+
+          <!-- BPM Analysis -->
+          <div class="report-section">
+            <div class="section-header">
+              <h3><i class="fas fa-chart-bar"></i> Heart Rate Analysis</h3>
+            </div>
+            <div class="report-grid">
+              <div class="report-card">
+                <h4><i class="fas fa-heart"></i> Current Status</h4>
+                <div id="bpmStatus" class="status-indicator status-normal">
+                  <h4>Status: Normal</h4>
+                  <p>Heart rate is within healthy range</p>
+                </div>
+                <div class="analysis-grid">
+                  <div class="analysis-item">
+                    <label>Variability:</label>
+                    <span id="bpmVariability">-- ms</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Trend:</label>
+                    <span id="bpmTrend">Stable</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Zone:</label>
+                    <span id="bpmZone">Resting</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card">
+                <h4><i class="fas fa-history"></i> Historical Data</h4>
+                <div class="analysis-grid">
+                  <div class="analysis-item">
+                    <label>1-hour Avg:</label>
+                    <span id="bpmHourAvg">-- bpm</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>24-hour Avg:</label>
+                    <span id="bpmDayAvg">-- bpm</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Peak Today:</label>
+                    <span id="bpmPeak">-- bpm</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Low Today:</label>
+                    <span id="bpmLow">-- bpm</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card">
+                <h4><i class="fas fa-bell"></i> Health Insights</h4>
+                <div class="analysis-grid">
+                  <div class="analysis-item">
+                    <label>Cardiac Load:</label>
+                    <span id="cardiacLoad">Low</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Recovery Index:</label>
+                    <span id="recoveryIndex">Good</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Fitness Level:</label>
+                    <span id="fitnessLevel">Average</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Readings -->
+          <div class="data-section">
+            <div class="section-header">
+              <h3><i class="fas fa-list"></i> Recent Heart Rate Readings</h3>
+            </div>
+            <div id="bpmReadings" class="data-box">
+              <!-- BPM readings will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SpO2 Report Dashboard -->
+    <div id="spo2Report" class="dashboard-container" style="display: none">
+      <div class="dashboard-header">
+        <div class="header-left">
+          <i class="fas fa-lungs"></i>
+          <h1>SpO2 Level Analysis</h1>
+        </div>
+
+        <div class="header-right">
+          <button id="spo2ToDashboard" class="back-btn">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Full Dashboard</span>
+          </button>
+          <button id="spo2ToLanding" class="back-btn">
+            <i class="fas fa-home"></i>
+            <span>Back to Home</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SpO2 Stats Overview -->
+      <div class="stats-overview">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-lungs"></i></div>
+          <div class="stat-info">
+            <h3>Current SpO2</h3>
+            <span id="spo2Current" class="stat-value">--</span>
+            <span class="stat-unit">%</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+          <div class="stat-info">
+            <h3>Average SpO2</h3>
+            <span id="spo2Average" class="stat-value">--</span>
+            <span class="stat-unit">%</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+          <div class="stat-info">
+            <h3>Max SpO2</h3>
+            <span id="spo2Max" class="stat-value">--</span>
+            <span class="stat-unit">%</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+          <div class="stat-info">
+            <h3>Min SpO2</h3>
+            <span id="spo2Min" class="stat-value">--</span>
+            <span class="stat-unit">%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SpO2 Analysis Sections -->
+      <div class="main-content">
+        <div class="content-full">
+          <!-- SpO2 Chart Section -->
+          <div class="chart-section">
+            <div class="section-header">
+              <h3><i class="fas fa-lungs"></i> SpO2 Level Trends</h3>
+            </div>
+            <div class="chart-container" style="height: 400px">
+              <canvas id="spo2Chart"></canvas>
+            </div>
+          </div>
+
+          <!-- SpO2 Analysis -->
+          <div class="report-section">
+            <div class="section-header">
+              <h3><i class="fas fa-chart-bar"></i> Blood Oxygen Analysis</h3>
+            </div>
+            <div class="report-grid">
+              <div class="report-card">
+                <h4><i class="fas fa-lungs"></i> Current Status</h4>
+                <div id="spo2Status" class="status-indicator status-normal">
+                  <h4>Status: Normal</h4>
+                  <p>Oxygen levels are within healthy range</p>
+                </div>
+                <div class="analysis-grid">
+                  <div class="analysis-item">
+                    <label>Stability:</label>
+                    <span id="spo2Stability">Stable</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Trend:</label>
+                    <span id="spo2Trend">Consistent</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Quality:</label>
+                    <span id="spo2Quality">Good</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card">
+                <h4><i class="fas fa-history"></i> Historical Data</h4>
+                <div class="analysis-grid">
+                  <div class="analysis-item">
+                    <label>1-hour Avg:</label>
+                    <span id="spo2HourAvg">-- %</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>24-hour Avg:</label>
+                    <span id="spo2DayAvg">-- %</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Peak Today:</label>
+                    <span id="spo2Peak">-- %</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Low Today:</label>
+                    <span id="spo2Low">-- %</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="report-card">
+                <h4><i class="fas fa-shield-alt"></i> Risk Assessment</h4>
+                <div class="analysis-grid">
+                  <div class="analysis-item">
+                    <label>Hypoxemia Risk:</label>
+                    <span id="hypoxemiaRisk">Low</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Oxygen Efficiency:</label>
+                    <span id="oxygenEfficiency">Good</span>
+                  </div>
+                  <div class="analysis-item">
+                    <label>Respiratory Health:</label>
+                    <span id="respiratoryHealth">Normal</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Readings -->
+          <div class="data-section">
+            <div class="section-header">
+              <h3><i class="fas fa-list"></i> Recent SpO2 Readings</h3>
+            </div>
+            <div id="spo2Readings" class="data-box">
+              <!-- SpO2 readings will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script -->
+    <script src="app.js"></script>
   </body>
 </html>
