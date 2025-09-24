@@ -15,7 +15,7 @@ const char* password = "H@ppy123";
 #define DATABASE_URL "https://hypoxemia-and-stress-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
 
 // 🔹 Firebase Authentication
-#define USER_EMAIL    "kambamtaibangnganba@gmail.com"
+#define USER_EMAIL    "XXXXXXXXXXXX@gmail.com"
 #define USER_PASSWORD "H@ppy123"
 
 FirebaseData fbdo;

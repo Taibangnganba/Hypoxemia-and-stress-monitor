@@ -98,6 +98,14 @@ Below is the wiring diagram of **ESP32-C3 Mini** with **MAX30102**:
 
 https://hypoxemia-and-stress-monitor.web.app/
 
+---
+
+## Demo Video
+
+https://drive.google.com/file/d/1d-rxOLMC3Bg4WZWur2RqyUPx3_YKTbsX/view?usp=drive_link
+
+---
+
 ## Data Source
 
 This project makes use of publicly available physiological data:
